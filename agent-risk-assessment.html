@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI Risk Assessment Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e12;
+  --surface: #14171d;
+  --surface2: #1a1e26;
+  --border: #252a34;
+  --border-light: #2f3542;
+  --text: #e4e7ed;
+  --text-muted: #8891a0;
+  --text-dim: #5a6374;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  --critical: #ef4444;
+  --critical-bg: rgba(239, 68, 68, 0.08);
+  --high: #f97316;
+  --high-bg: rgba(249, 115, 22, 0.08);
+  --medium: #eab308;
+  --medium-bg: rgba(234, 179, 8, 0.08);
+  --low: #22c55e;
+  --low-bg: rgba(34, 197, 94, 0.08);
+  --info: #6366f1;
+  --info-bg: rgba(99, 102, 241, 0.08);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+::selection { background: var(--accent); color: white; }
+
+.noise-overlay {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.app { position: relative; z-index: 1; }
+
+/* Header */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(12, 14, 18, 0.85);
+  backdrop-filter: blur(20px);
+}
+.header-inner {
+  max-width: 1440px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+}
+.logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.35rem; color: var(--text);
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; color: white; font-family: 'JetBrains Mono', monospace; font-weight: 600;
+}
+.header-actions { display: flex; gap: 0.5rem; }
+.btn {
+  font-family: 'DM Sans', sans-serif;
+  padding: 0.45rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.8rem; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-muted); transition: all 0.2s;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.btn:hover { border-color: var(--border-light); color: var(--text); background: var(--surface2); }
+.btn-primary {
+  background: var(--accent); color: white; border-color: var(--accent);
+}
+.btn-primary:hover { background: #2563eb; }
+
+/* Tabs */
+.tabs-bar {
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  background: var(--surface);
+}
+.tabs-inner {
+  max-width: 1440px; margin: 0 auto;
+  display: flex; gap: 0; overflow-x: auto;
+}
+.tab-btn {
+  font-family: 'DM Sans', sans-serif;
+  padding: 0.75rem 1.25rem; background: none; border: none;
+  color: var(--text-dim); font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  white-space: nowrap; transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text-muted); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Main layout */
+.main { max-width: 1440px; margin: 0 auto; padding: 2rem; }
+
+.section-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.6rem; margin-bottom: 0.3rem; color: var(--text);
+}
+.section-subtitle { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+/* Cards */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-light); }
+
+/* Assessment Meta Form */
+.meta-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+.form-group label {
+  display: block; font-size: 0.75rem; font-weight: 600;
+  color: var(--text-muted); margin-bottom: 0.35rem;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 0.55rem 0.75rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.form-group textarea { resize: vertical; min-height: 70px; }
+
+/* Risk Table */
+.risk-table-wrapper {
+  overflow-x: auto; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+}
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.82rem;
+}
+thead { background: var(--surface2); }
+th {
+  text-align: left; padding: 0.75rem 1rem;
+  font-weight: 600; color: var(--text-muted);
+  font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.5px; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(59, 130, 246, 0.03); }
+
+.risk-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem; font-weight: 500;
+  color: var(--accent); white-space: nowrap;
+}
+.risk-name { font-weight: 600; color: var(--text); margin-bottom: 0.15rem; }
+.risk-desc { color: var(--text-muted); font-size: 0.78rem; line-height: 1.45; }
+.mapping-tag {
+  display: inline-block; padding: 0.15rem 0.5rem;
+  border-radius: 3px; font-size: 0.7rem; font-weight: 500;
+  margin: 0.1rem 0.15rem 0.1rem 0;
+}
+.tag-owasp { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+.tag-euai { background: rgba(59,130,246,0.12); color: #93c5fd; }
+.tag-iso { background: rgba(34,197,94,0.12); color: #86efac; }
+.tag-nist { background: rgba(249,115,22,0.12); color: #fdba74; }
+
+/* Risk level badges */
+.risk-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.2rem 0.6rem; border-radius: 4px;
+  font-size: 0.72rem; font-weight: 600;
+  white-space: nowrap;
+}
+.risk-critical { background: var(--critical-bg); color: var(--critical); }
+.risk-high { background: var(--high-bg); color: var(--high); }
+.risk-medium { background: var(--medium-bg); color: var(--medium); }
+.risk-low { background: var(--low-bg); color: var(--low); }
+
+/* Scoring selects in table */
+td select {
+  padding: 0.35rem 0.5rem; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif; cursor: pointer;
+  width: 100%; min-width: 80px;
+}
+td select:focus { outline: none; border-color: var(--accent); }
+
+td input[type="text"], td textarea {
+  padding: 0.35rem 0.5rem; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif; width: 100%; min-width: 120px;
+}
+td textarea { min-height: 50px; resize: vertical; }
+td input:focus, td textarea:focus { outline: none; border-color: var(--accent); }
+
+/* Summary Dashboard */
+.dashboard-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  text-align: center;
+}
+.stat-number {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2.2rem; color: var(--text); line-height: 1;
+}
+.stat-label {
+  font-size: 0.72rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 0.35rem;
+}
+.stat-card.critical-card { border-color: rgba(239,68,68,0.3); }
+.stat-card.critical-card .stat-number { color: var(--critical); }
+.stat-card.high-card { border-color: rgba(249,115,22,0.3); }
+.stat-card.high-card .stat-number { color: var(--high); }
+
+/* Risk heatmap */
+.heatmap {
+  display: grid; grid-template-columns: auto repeat(5, 1fr);
+  gap: 2px; margin-bottom: 2rem;
+}
+.heatmap-label {
+  padding: 0.5rem; font-size: 0.72rem; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 500;
+}
+.heatmap-cell {
+  aspect-ratio: 1; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 600; color: white;
+  min-height: 48px; cursor: default; transition: transform 0.15s;
+}
+.heatmap-cell:hover { transform: scale(1.05); }
+.heat-1 { background: #166534; }
+.heat-2 { background: #15803d; }
+.heat-3 { background: #a16207; }
+.heat-4 { background: #c2410c; }
+.heat-5 { background: #991b1b; }
+.heat-6 { background: rgba(30,30,40,0.4); }
+.heatmap-header { font-weight: 600; color: var(--text-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Tab content */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Framework Reference */
+.framework-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+}
+.fw-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+}
+.fw-card h3 {
+  font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.fw-card p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; }
+.fw-badge {
+  font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Print styles */
+@media print {
+  .header, .tabs-bar, .header-actions, .btn, .noise-overlay { display: none !important; }
+  body { background: white; color: #1a1a1a; }
+  .card, .stat-card, .fw-card, .risk-table-wrapper { border-color: #ddd; background: white; }
+  .main { max-width: 100%; padding: 1rem; }
+  td select, td input, td textarea { border: 1px solid #ccc; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+/* Export modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem;
+  max-width: 480px; width: 90%;
+}
+.modal h3 { font-family: 'Instrument Serif', serif; font-size: 1.3rem; margin-bottom: 0.5rem; }
+.modal p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem; }
+.modal-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header { padding: 0 1rem; }
+  .tabs-bar { padding: 0 1rem; }
+  .main { padding: 1rem; }
+  .meta-grid { grid-template-columns: 1fr; }
+  .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+  .framework-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+<div class="app">
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">AI</div>
+      <span>Agentic AI Risk Assessment</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="saveToLocalStorage()">&#128190; Save Draft</button>
+      <button class="btn" onclick="showExportModal()">&#128228; Export</button>
+      <button class="btn btn-primary" onclick="window.print()">&#128424; Print</button>
+    </div>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab-btn active" data-tab="assessment">Assessment Info</button>
+    <button class="tab-btn" data-tab="risks">Risk Register</button>
+    <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="heatmap">Risk Heatmap</button>
+    <button class="tab-btn" data-tab="frameworks">Framework Reference</button>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="main">
+
+<!-- Tab 1: Assessment Info -->
+<div class="tab-content active" id="tab-assessment">
+  <h2 class="section-title">Assessment Information</h2>
+  <p class="section-subtitle">Core details about the AI agent system being assessed and the assessment context.</p>
+
+  <div class="card">
+    <div class="meta-grid">
+      <div class="form-group">
+        <label>Assessment Title</label>
+        <input type="text" id="assessTitle" placeholder="e.g. Customer Support Agent v2.1 Risk Assessment">
+      </div>
+      <div class="form-group">
+        <label>Assessment ID</label>
+        <input type="text" id="assessId" placeholder="e.g. ARA-2026-001">
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="assessDate">
+      </div>
+      <div class="form-group">
+        <label>Assessor Name</label>
+        <input type="text" id="assessor" placeholder="Name of lead assessor">
+      </div>
+      <div class="form-group">
+        <label>Organization</label>
+        <input type="text" id="org" placeholder="Organization name">
+      </div>
+      <div class="form-group">
+        <label>Department / Business Unit</label>
+        <input type="text" id="dept" placeholder="e.g. AI Engineering, IT Security">
+      </div>
+      <div class="form-group">
+        <label>AI System Name</label>
+        <input type="text" id="sysName" placeholder="Name of the agentic AI system">
+      </div>
+      <div class="form-group">
+        <label>AI System Version</label>
+        <input type="text" id="sysVersion" placeholder="e.g. v2.1.0">
+      </div>
+      <div class="form-group">
+        <label>Agent Type</label>
+        <select id="agentType">
+          <option value="">Select type...</option>
+          <option>Single Autonomous Agent</option>
+          <option>Multi-Agent System</option>
+          <option>Human-in-the-Loop Agent</option>
+          <option>Tool-Using Agent</option>
+          <option>Coding / DevOps Agent</option>
+          <option>Customer-Facing Agent</option>
+          <option>Internal Operations Agent</option>
+          <option>Decision-Support Agent</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>EU AI Act Risk Classification</label>
+        <select id="euRiskClass">
+          <option value="">Select classification...</option>
+          <option value="unacceptable">Unacceptable Risk (Prohibited)</option>
+          <option value="high">High Risk (Annex III)</option>
+          <option value="limited">Limited Risk (Transparency Obligations)</option>
+          <option value="minimal">Minimal Risk</option>
+          <option value="gpai">General Purpose AI (GPAI)</option>
+          <option value="gpai-systemic">GPAI with Systemic Risk</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Lifecycle Stage</label>
+        <select id="lifecycle">
+          <option value="">Select stage...</option>
+          <option>Inception / Planning</option>
+          <option>Design & Development</option>
+          <option>Testing & Validation</option>
+          <option>Pre-Deployment</option>
+          <option>Production / Operation</option>
+          <option>Post-Market Monitoring</option>
+          <option>Decommissioning</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assessment Frequency</label>
+        <select id="assessFreq">
+          <option value="">Select...</option>
+          <option>Initial Assessment</option>
+          <option>Quarterly Review</option>
+          <option>Semi-Annual Review</option>
+          <option>Annual Review</option>
+          <option>Triggered by Change</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom: 1rem;">
+      <label>System Description & Scope</label>
+      <textarea id="sysDesc" rows="3" placeholder="Describe the agent's purpose, capabilities, tools it accesses, data it processes, and the scope of its autonomous decision-making authority."></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom: 1rem;">
+      <label>Tools, APIs & External Integrations</label>
+      <textarea id="sysTools" rows="2" placeholder="List all tools, APIs, databases, cloud services, and third-party systems the agent can access or invoke."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Stakeholders & Affected Parties</label>
+      <textarea id="stakeholders" rows="2" placeholder="Identify all parties affected by the agent's actions, including internal users, customers, and downstream systems."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 2: Risk Register -->
+<div class="tab-content" id="tab-risks">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+      <h2 class="section-title">Risk Register</h2>
+      <p class="section-subtitle" style="margin-bottom:0;">Each risk maps to OWASP Agentic Top 10 (ASI), EU AI Act articles, ISO 42001 controls, and NIST AI RMF.</p>
+    </div>
+  </div>
+
+  <div class="risk-table-wrapper">
+    <table id="riskTable">
+      <thead>
+        <tr>
+          <th style="width:70px;">Risk ID</th>
+          <th style="min-width:220px;">Risk Description</th>
+          <th style="min-width:180px;">Framework Mappings</th>
+          <th style="width:90px;">Likelihood</th>
+          <th style="width:90px;">Impact</th>
+          <th style="width:90px;">Inherent Risk</th>
+          <th style="min-width:180px;">Existing Controls</th>
+          <th style="width:90px;">Control Effectiveness</th>
+          <th style="width:90px;">Residual Risk</th>
+          <th style="min-width:160px;">Recommended Actions</th>
+          <th style="width:100px;">Owner</th>
+          <th style="width:90px;">Status</th>
+        </tr>
+      </thead>
+      <tbody id="riskBody">
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Tab 3: Dashboard -->
+<div class="tab-content" id="tab-dashboard">
+  <h2 class="section-title">Risk Summary Dashboard</h2>
+  <p class="section-subtitle">Aggregated view of assessed risks across all categories.</p>
+
+  <div class="dashboard-grid" id="dashStats"></div>
+
+  <div class="card">
+    <h3 style="font-size:0.9rem; font-weight:600; margin-bottom:1rem;">Risk Distribution by Category</h3>
+    <div id="riskBars" style="display:flex; flex-direction:column; gap:0.6rem;"></div>
+  </div>
+</div>
+
+<!-- Tab 4: Heatmap -->
+<div class="tab-content" id="tab-heatmap">
+  <h2 class="section-title">Risk Heatmap</h2>
+  <p class="section-subtitle">Visual mapping of likelihood against impact for all assessed risks. The cell numbers represent the count of risks in each category.</p>
+
+  <div class="card" style="max-width: 600px;">
+    <div class="heatmap" id="heatmapGrid"></div>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem; font-size:0.75rem; color: var(--text-muted);">
+      <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:14px;height:14px;border-radius:3px;background:#166534;display:inline-block;"></span> Low</span>
+      <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:14px;height:14px;border-radius:3px;background:#15803d;display:inline-block;"></span> Moderate</span>
+      <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:14px;height:14px;border-radius:3px;background:#a16207;display:inline-block;"></span> Medium</span>
+      <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:14px;height:14px;border-radius:3px;background:#c2410c;display:inline-block;"></span> High</span>
+      <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:14px;height:14px;border-radius:3px;background:#991b1b;display:inline-block;"></span> Critical</span>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 5: Framework Reference -->
+<div class="tab-content" id="tab-frameworks">
+  <h2 class="section-title">Framework Cross-Reference</h2>
+  <p class="section-subtitle">Quick reference for the regulatory and standards frameworks mapped in this assessment.</p>
+
+  <div class="framework-grid">
+    <div class="fw-card">
+      <h3><span class="fw-badge tag-owasp">OWASP</span> Top 10 for Agentic Applications 2026</h3>
+      <p>The OWASP Agentic Security Initiative (ASI) identifies the ten highest-impact risks for autonomous AI systems. These risks address goal hijacking, identity abuse, code execution, inter-agent communication, trust exploitation, tool misuse, supply chain vulnerabilities, memory poisoning, cascading failures, and rogue agents.</p>
+      <div style="margin-top:0.75rem; font-size:0.78rem; color:var(--text-muted); line-height:1.7;">
+        <strong style="color:var(--text);">ASI-01:</strong> Agent Goal Hijack<br>
+        <strong style="color:var(--text);">ASI-02:</strong> Identity & Privilege Abuse<br>
+        <strong style="color:var(--text);">ASI-03:</strong> Unexpected Code Execution (RCE)<br>
+        <strong style="color:var(--text);">ASI-04:</strong> Insecure Inter-Agent Communication<br>
+        <strong style="color:var(--text);">ASI-05:</strong> Human-Agent Trust Exploitation<br>
+        <strong style="color:var(--text);">ASI-06:</strong> Tool Misuse & Exploitation<br>
+        <strong style="color:var(--text);">ASI-07:</strong> Agentic Supply Chain Vulnerabilities<br>
+        <strong style="color:var(--text);">ASI-08:</strong> Memory & Context Poisoning<br>
+        <strong style="color:var(--text);">ASI-09:</strong> Cascading Failures<br>
+        <strong style="color:var(--text);">ASI-10:</strong> Rogue Agents
+      </div>
+    </div>
+    <div class="fw-card">
+      <h3><span class="fw-badge tag-euai">EU AI</span> EU AI Act (Regulation 2024/1689)</h3>
+      <p>The EU AI Act establishes a risk-based regulatory framework with four tiers: unacceptable, high, limited, and minimal risk. High-risk AI systems must comply with Articles 9 through 15, which cover risk management, data governance, technical documentation, record-keeping, transparency, human oversight, and robustness.</p>
+      <div style="margin-top:0.75rem; font-size:0.78rem; color:var(--text-muted); line-height:1.7;">
+        <strong style="color:var(--text);">Art. 5:</strong> Prohibited AI Practices<br>
+        <strong style="color:var(--text);">Art. 9:</strong> Risk Management System<br>
+        <strong style="color:var(--text);">Art. 10:</strong> Data & Data Governance<br>
+        <strong style="color:var(--text);">Art. 11:</strong> Technical Documentation<br>
+        <strong style="color:var(--text);">Art. 12:</strong> Record-keeping / Logging<br>
+        <strong style="color:var(--text);">Art. 13:</strong> Transparency & Information<br>
+        <strong style="color:var(--text);">Art. 14:</strong> Human Oversight<br>
+        <strong style="color:var(--text);">Art. 15:</strong> Accuracy, Robustness & Cybersecurity<br>
+        <strong style="color:var(--text);">Art. 51-53:</strong> GPAI Model Obligations
+      </div>
+    </div>
+    <div class="fw-card">
+      <h3><span class="fw-badge tag-iso">ISO</span> ISO/IEC 42001:2023 Annex A Controls</h3>
+      <p>ISO 42001 provides 39 controls across 9 areas (A.2 to A.10) for establishing an AI Management System (AIMS). These controls cover AI policy, internal organization, resources, impact assessment, AI lifecycle management, data management, transparency, use policies, and third-party relationships.</p>
+      <div style="margin-top:0.75rem; font-size:0.78rem; color:var(--text-muted); line-height:1.7;">
+        <strong style="color:var(--text);">A.2:</strong> AI Policies<br>
+        <strong style="color:var(--text);">A.3:</strong> Internal Organization<br>
+        <strong style="color:var(--text);">A.4:</strong> Resources for AI Systems<br>
+        <strong style="color:var(--text);">A.5:</strong> AI System Impact Assessment<br>
+        <strong style="color:var(--text);">A.6:</strong> AI System Lifecycle<br>
+        <strong style="color:var(--text);">A.7:</strong> Data for AI Systems<br>
+        <strong style="color:var(--text);">A.8:</strong> Information for Interested Parties<br>
+        <strong style="color:var(--text);">A.9:</strong> Use of AI Systems<br>
+        <strong style="color:var(--text);">A.10:</strong> Third-Party & Supplier Relationships
+      </div>
+    </div>
+    <div class="fw-card">
+      <h3><span class="fw-badge tag-nist">NIST</span> NIST AI Risk Management Framework (AI RMF 1.0)</h3>
+      <p>The NIST AI RMF provides a voluntary framework organized around four core functions: Govern, Map, Measure, and Manage. Each function contains categories and subcategories that help organizations address AI risks throughout the system lifecycle in a structured, repeatable way.</p>
+      <div style="margin-top:0.75rem; font-size:0.78rem; color:var(--text-muted); line-height:1.7;">
+        <strong style="color:var(--text);">GOVERN:</strong> Policies, roles, culture, legal compliance<br>
+        <strong style="color:var(--text);">MAP:</strong> Context, scope, risk identification<br>
+        <strong style="color:var(--text);">MEASURE:</strong> Analysis, metrics, tracking<br>
+        <strong style="color:var(--text);">MANAGE:</strong> Treat, monitor, communicate risks
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h3>Export Assessment</h3>
+    <p>Choose an export format for your risk assessment data.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="exportJSON()">&#128196; Export JSON</button>
+      <button class="btn" onclick="exportCSV()">&#128202; Export CSV</button>
+      <button class="btn" onclick="window.print(); hideExportModal();">&#128424; Print PDF</button>
+      <button class="btn" onclick="hideExportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Risk Data ──
+const risks = [
+  {
+    id: "ASI-01",
+    name: "Agent Goal Hijack",
+    desc: "Attacker manipulates the agent's objectives or decision path through injected instructions embedded in documents, emails, API responses, or retrieved content, causing the agent to pursue unintended goals.",
+    owasp: "ASI-01",
+    euai: "Art. 9, Art. 15",
+    iso: "A.5.1, A.6.1, A.6.2, A.9.3",
+    nist: "MAP 1.5, MANAGE 2.2",
+    controls: "Input validation, prompt hardening, operational guardrails, anomaly detection on goal drift"
+  },
+  {
+    id: "ASI-02",
+    name: "Identity & Privilege Abuse",
+    desc: "The agent's identity or credentials are stolen, impersonated, or escalated, granting unauthorized access to systems and data that exceed the agent's intended scope of authority.",
+    owasp: "ASI-02",
+    euai: "Art. 9, Art. 12, Art. 15",
+    iso: "A.3.1, A.6.2, A.9.2",
+    nist: "GOVERN 1.4, MANAGE 2.3",
+    controls: "Short-lived credentials, OAuth 2.0, agent identity isolation from user identity, privileged action audit logging"
+  },
+  {
+    id: "ASI-03",
+    name: "Unexpected Code Execution (RCE)",
+    desc: "The agent generates and executes code or system commands that were not sanctioned by the operator, potentially leading to data destruction, infrastructure compromise, or lateral movement.",
+    owasp: "ASI-03",
+    euai: "Art. 9, Art. 14, Art. 15",
+    iso: "A.6.1, A.6.2, A.9.3, A.9.4",
+    nist: "MAP 3.4, MANAGE 2.2",
+    controls: "Sandboxed execution, code review gating, command allowlisting, runtime output validation"
+  },
+  {
+    id: "ASI-04",
+    name: "Insecure Inter-Agent Communication",
+    desc: "Messages exchanged between agents in a multi-agent system lack authentication, integrity, or confidentiality protections, allowing injection, spoofing, or eavesdropping on agent-to-agent workflows.",
+    owasp: "ASI-04",
+    euai: "Art. 9, Art. 12, Art. 15",
+    iso: "A.6.2, A.8.1, A.10.2",
+    nist: "MAP 3.4, MANAGE 2.4",
+    controls: "Mutual TLS, signed message payloads, agent authentication, structured message schemas, communication logging"
+  },
+  {
+    id: "ASI-05",
+    name: "Human-Agent Trust Exploitation",
+    desc: "The agent leverages persuasive, authoritative, or emotionally manipulative outputs to cause humans to approve harmful actions, bypass security protocols, or disclose sensitive information without independent verification.",
+    owasp: "ASI-05",
+    euai: "Art. 5, Art. 13, Art. 14",
+    iso: "A.5.1, A.8.1, A.8.2, A.9.1",
+    nist: "GOVERN 3.1, MAP 2.3",
+    controls: "Mandatory human review for high-impact decisions, confidence-level disclosure, dual-approval workflows, AI literacy training"
+  },
+  {
+    id: "ASI-06",
+    name: "Tool Misuse & Exploitation",
+    desc: "The agent uses legitimate tools (APIs, databases, shell commands) in unsafe or destructive ways due to ambiguous prompts, misalignment, or manipulated tool descriptors, leading to data loss or exfiltration.",
+    owasp: "ASI-06",
+    euai: "Art. 9, Art. 14, Art. 15",
+    iso: "A.4.1, A.6.2, A.9.3, A.9.4",
+    nist: "MAP 3.4, MANAGE 2.2",
+    controls: "Tool permission scoping (least privilege), argument validation, sandboxed tool execution, policy engine on every invocation"
+  },
+  {
+    id: "ASI-07",
+    name: "Agentic Supply Chain Vulnerabilities",
+    desc: "Compromised or malicious components, including MCP servers, plugins, external tools, and third-party agent frameworks, are loaded at runtime, introducing backdoors, data exfiltration, or behavioral manipulation.",
+    owasp: "ASI-07",
+    euai: "Art. 9, Art. 10, Art. 15",
+    iso: "A.4.1, A.6.1, A.7.4, A.10.1, A.10.2, A.10.3",
+    nist: "MAP 3.5, MANAGE 4.1",
+    controls: "Dependency verification and signing, MCP server allow-listing, SBOM/AIBOM, runtime component integrity checks"
+  },
+  {
+    id: "ASI-08",
+    name: "Memory & Context Poisoning",
+    desc: "Attackers corrupt the agent's persistent memory, session context, or RAG data sources with malicious content that influences future decisions, introduces bias, or triggers unintended actions across sessions.",
+    owasp: "ASI-08",
+    euai: "Art. 9, Art. 10, Art. 15",
+    iso: "A.5.1, A.7.1, A.7.2, A.7.3, A.7.4",
+    nist: "MAP 2.3, MEASURE 2.6",
+    controls: "Memory integrity validation, data lineage tracking, context window isolation, periodic memory auditing, RAG source vetting"
+  },
+  {
+    id: "ASI-09",
+    name: "Cascading Failures",
+    desc: "A single point of failure or compromised agent triggers a chain reaction across interconnected agents, tools, and systems, amplifying the blast radius far beyond the initial incident scope.",
+    owasp: "ASI-09",
+    euai: "Art. 9, Art. 12, Art. 15",
+    iso: "A.5.1, A.6.1, A.6.2, A.9.4",
+    nist: "MAP 5.1, MANAGE 2.4",
+    controls: "Circuit breakers, blast radius caps, isolated replay testing in clone environments, graceful degradation design, kill switches"
+  },
+  {
+    id: "ASI-10",
+    name: "Rogue Agents",
+    desc: "A compromised or misaligned agent operates harmfully while appearing legitimate, persisting across sessions, self-replicating actions, impersonating other agents, or silently approving unsafe operations.",
+    owasp: "ASI-10",
+    euai: "Art. 9, Art. 12, Art. 14",
+    iso: "A.3.1, A.5.1, A.6.2, A.9.2",
+    nist: "GOVERN 1.4, MANAGE 3.2",
+    controls: "Behavioral baseline monitoring, governance frameworks, sandboxing, anomaly detection, agent termination (kill switch) procedures"
+  },
+  {
+    id: "AGR-11",
+    name: "Sensitive Data Leakage",
+    desc: "The agent inadvertently exposes confidential data, PII, intellectual property, or credentials through its outputs, logs, inter-agent messages, or tool invocation parameters.",
+    owasp: "LLM06 (cross-ref)",
+    euai: "Art. 10, Art. 12, Art. 13",
+    iso: "A.7.1, A.7.5, A.8.1, A.8.2",
+    nist: "MAP 2.3, MANAGE 2.2",
+    controls: "DLP filters on outputs, sensitive data redaction, output classification, log sanitization, data access controls"
+  },
+  {
+    id: "AGR-12",
+    name: "Bias & Fairness Failures",
+    desc: "The agent produces systematically unfair outcomes across protected groups due to biased training data, skewed retrieval sources, or biased tool outputs that compound through autonomous decision chains.",
+    owasp: "LLM Bias (cross-ref)",
+    euai: "Art. 9, Art. 10, Art. 13, Art. 14",
+    iso: "A.5.1, A.7.1, A.7.2, A.8.2",
+    nist: "MAP 2.3, MEASURE 2.11",
+    controls: "Fairness testing across demographics, bias auditing of training and retrieval data, disparate impact analysis, transparency reports"
+  },
+  {
+    id: "AGR-13",
+    name: "Lack of Human Oversight",
+    desc: "Insufficient mechanisms exist for humans to monitor, intervene in, or override the agent's autonomous actions, particularly for high-impact or irreversible decisions.",
+    owasp: "Cross-cutting",
+    euai: "Art. 14 (primary)",
+    iso: "A.3.1, A.5.1, A.9.1, A.9.2",
+    nist: "GOVERN 3.1, MANAGE 4.2",
+    controls: "Human-in-the-loop for critical actions, override capability, escalation protocols, approval workflows, action audit trails"
+  },
+  {
+    id: "AGR-14",
+    name: "Insufficient Logging & Auditability",
+    desc: "The agent's decisions, tool invocations, inter-agent messages, and state changes are not logged with adequate detail, making incident investigation, regulatory compliance, and accountability impossible.",
+    owasp: "Cross-cutting",
+    euai: "Art. 11, Art. 12",
+    iso: "A.6.1, A.6.2, A.8.1, A.8.2",
+    nist: "GOVERN 4.1, MEASURE 3.2",
+    controls: "Comprehensive action logging, decision trace capture, immutable log storage, retention policies, automated audit reporting"
+  },
+  {
+    id: "AGR-15",
+    name: "Non-compliance with Regulatory Requirements",
+    desc: "The agent system fails to meet mandatory requirements under the EU AI Act, GDPR, sector-specific regulations, or ISO 42001 controls, exposing the organization to fines, legal action, or market access restrictions.",
+    owasp: "Cross-cutting",
+    euai: "Art. 9-15, Art. 51-53",
+    iso: "A.2.1, A.2.2, A.5.1, A.8.1",
+    nist: "GOVERN 1.1, GOVERN 1.2",
+    controls: "Regulatory monitoring, compliance gap analysis, conformity assessment, AIMS documentation, post-market surveillance plan"
+  }
+];
+
+// ── Render Risk Table ──
+function renderRiskTable() {
+  const tbody = document.getElementById('riskBody');
+  tbody.innerHTML = risks.map((r, i) => `
+    <tr>
+      <td><span class="risk-id">${r.id}</span></td>
+      <td>
+        <div class="risk-name">${r.name}</div>
+        <div class="risk-desc">${r.desc}</div>
+      </td>
+      <td>
+        <span class="mapping-tag tag-owasp">${r.owasp}</span>
+        <span class="mapping-tag tag-euai">${r.euai}</span>
+        <span class="mapping-tag tag-iso">${r.iso}</span>
+        <span class="mapping-tag tag-nist">${r.nist}</span>
+      </td>
+      <td>
+        <select data-field="likelihood" data-idx="${i}" onchange="calcRisk(${i})">
+          <option value="">—</option>
+          <option value="1">1 - Rare</option>
+          <option value="2">2 - Unlikely</option>
+          <option value="3">3 - Possible</option>
+          <option value="4">4 - Likely</option>
+          <option value="5">5 - Almost Certain</option>
+        </select>
+      </td>
+      <td>
+        <select data-field="impact" data-idx="${i}" onchange="calcRisk(${i})">
+          <option value="">—</option>
+          <option value="1">1 - Negligible</option>
+          <option value="2">2 - Minor</option>
+          <option value="3">3 - Moderate</option>
+          <option value="4">4 - Major</option>
+          <option value="5">5 - Catastrophic</option>
+        </select>
+      </td>
+      <td><span class="risk-badge" id="inherent-${i}">—</span></td>
+      <td><textarea data-field="controls" data-idx="${i}" placeholder="${r.controls}"></textarea></td>
+      <td>
+        <select data-field="effectiveness" data-idx="${i}" onchange="calcRisk(${i})">
+          <option value="">—</option>
+          <option value="0.8">Strong (80%)</option>
+          <option value="0.6">Adequate (60%)</option>
+          <option value="0.4">Partial (40%)</option>
+          <option value="0.2">Weak (20%)</option>
+          <option value="0">None (0%)</option>
+        </select>
+      </td>
+      <td><span class="risk-badge" id="residual-${i}">—</span></td>
+      <td><textarea data-field="actions" data-idx="${i}" placeholder="Recommended actions..."></textarea></td>
+      <td><input type="text" data-field="owner" data-idx="${i}" placeholder="Owner"></td>
+      <td>
+        <select data-field="status" data-idx="${i}">
+          <option value="">—</option>
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Mitigated">Mitigated</option>
+          <option value="Accepted">Accepted</option>
+          <option value="Transferred">Transferred</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── Risk Calculation ──
+function getRiskLevel(score) {
+  if (score >= 20) return { label: 'Critical', cls: 'risk-critical' };
+  if (score >= 12) return { label: 'High', cls: 'risk-high' };
+  if (score >= 6) return { label: 'Medium', cls: 'risk-medium' };
+  if (score >= 1) return { label: 'Low', cls: 'risk-low' };
+  return { label: '—', cls: '' };
+}
+
+function calcRisk(idx) {
+  const l = parseInt(document.querySelector(`select[data-field="likelihood"][data-idx="${idx}"]`).value) || 0;
+  const imp = parseInt(document.querySelector(`select[data-field="impact"][data-idx="${idx}"]`).value) || 0;
+  const eff = parseFloat(document.querySelector(`select[data-field="effectiveness"][data-idx="${idx}"]`).value);
+
+  const inherent = l * imp;
+  const iEl = document.getElementById(`inherent-${idx}`);
+  if (inherent > 0) {
+    const iLvl = getRiskLevel(inherent);
+    iEl.textContent = `${inherent} ${iLvl.label}`;
+    iEl.className = `risk-badge ${iLvl.cls}`;
+  } else {
+    iEl.textContent = '—'; iEl.className = 'risk-badge';
+  }
+
+  const rEl = document.getElementById(`residual-${idx}`);
+  if (inherent > 0 && !isNaN(eff)) {
+    const residual = Math.round(inherent * (1 - eff));
+    const rLvl = getRiskLevel(residual);
+    rEl.textContent = `${residual} ${rLvl.label}`;
+    rEl.className = `risk-badge ${rLvl.cls}`;
+  } else if (inherent > 0) {
+    rEl.textContent = iEl.textContent;
+    rEl.className = iEl.className;
+  } else {
+    rEl.textContent = '—'; rEl.className = 'risk-badge';
+  }
+}
+
+// ── Dashboard ──
+function refreshDashboard() {
+  let counts = { Critical: 0, High: 0, Medium: 0, Low: 0, Unassessed: 0 };
+  let total = risks.length;
+  risks.forEach((_, i) => {
+    const l = parseInt(document.querySelector(`select[data-field="likelihood"][data-idx="${i}"]`)?.value) || 0;
+    const imp = parseInt(document.querySelector(`select[data-field="impact"][data-idx="${i}"]`)?.value) || 0;
+    const score = l * imp;
+    if (score === 0) counts.Unassessed++;
+    else {
+      const lvl = getRiskLevel(score);
+      counts[lvl.label]++;
+    }
+  });
+
+  const statsEl = document.getElementById('dashStats');
+  statsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-number">${total}</div><div class="stat-label">Total Risks</div></div>
+    <div class="stat-card critical-card"><div class="stat-number">${counts.Critical}</div><div class="stat-label">Critical</div></div>
+    <div class="stat-card high-card"><div class="stat-number">${counts.High}</div><div class="stat-label">High</div></div>
+    <div class="stat-card"><div class="stat-number" style="color:var(--medium)">${counts.Medium}</div><div class="stat-label">Medium</div></div>
+    <div class="stat-card"><div class="stat-number" style="color:var(--low)">${counts.Low}</div><div class="stat-label">Low</div></div>
+    <div class="stat-card"><div class="stat-number" style="color:var(--text-dim)">${counts.Unassessed}</div><div class="stat-label">Unassessed</div></div>
+  `;
+
+  const barsEl = document.getElementById('riskBars');
+  const colors = { Critical: 'var(--critical)', High: 'var(--high)', Medium: 'var(--medium)', Low: 'var(--low)', Unassessed: 'var(--text-dim)' };
+  barsEl.innerHTML = Object.entries(counts).map(([k, v]) => {
+    const pct = total > 0 ? (v / total * 100) : 0;
+    return `<div style="display:flex;align-items:center;gap:0.75rem;">
+      <span style="font-size:0.78rem;width:90px;color:var(--text-muted);text-align:right;">${k}</span>
+      <div style="flex:1;height:24px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative;">
+        <div style="height:100%;width:${pct}%;background:${colors[k]};border-radius:4px;transition:width 0.3s;min-width:${v > 0 ? '2px' : '0'}"></div>
+      </div>
+      <span style="font-size:0.78rem;width:30px;color:var(--text);font-weight:600;">${v}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Heatmap ──
+function refreshHeatmap() {
+  const grid = document.getElementById('heatmapGrid');
+  const matrix = {};
+  for (let l = 1; l <= 5; l++) for (let imp = 1; imp <= 5; imp++) matrix[`${l}-${imp}`] = 0;
+
+  risks.forEach((_, i) => {
+    const l = parseInt(document.querySelector(`select[data-field="likelihood"][data-idx="${i}"]`)?.value) || 0;
+    const imp = parseInt(document.querySelector(`select[data-field="impact"][data-idx="${i}"]`)?.value) || 0;
+    if (l > 0 && imp > 0) matrix[`${l}-${imp}`]++;
+  });
+
+  const heatColor = (l, imp) => {
+    const s = l * imp;
+    if (s >= 20) return 'heat-5';
+    if (s >= 12) return 'heat-4';
+    if (s >= 6) return 'heat-3';
+    if (s >= 3) return 'heat-2';
+    return 'heat-1';
+  };
+
+  const impLabels = ['Negligible', 'Minor', 'Moderate', 'Major', 'Catastrophic'];
+  const lLabels = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain'];
+
+  let html = '<div class="heatmap-label"></div>';
+  impLabels.forEach(l => html += `<div class="heatmap-label heatmap-header">${l}</div>`);
+
+  for (let l = 5; l >= 1; l--) {
+    html += `<div class="heatmap-label" style="font-size:0.72rem;">${lLabels[l-1]}</div>`;
+    for (let imp = 1; imp <= 5; imp++) {
+      const count = matrix[`${l}-${imp}`];
+      html += `<div class="heatmap-cell ${heatColor(l, imp)}" title="L:${l} × I:${imp} = ${l*imp}">${count || ''}</div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'dashboard') refreshDashboard();
+    if (btn.dataset.tab === 'heatmap') refreshHeatmap();
+  });
+});
+
+// ── Save / Load ──
+function collectData() {
+  const meta = {
+    assessTitle: document.getElementById('assessTitle').value,
+    assessId: document.getElementById('assessId').value,
+    assessDate: document.getElementById('assessDate').value,
+    assessor: document.getElementById('assessor').value,
+    org: document.getElementById('org').value,
+    dept: document.getElementById('dept').value,
+    sysName: document.getElementById('sysName').value,
+    sysVersion: document.getElementById('sysVersion').value,
+    agentType: document.getElementById('agentType').value,
+    euRiskClass: document.getElementById('euRiskClass').value,
+    lifecycle: document.getElementById('lifecycle').value,
+    assessFreq: document.getElementById('assessFreq').value,
+    sysDesc: document.getElementById('sysDesc').value,
+    sysTools: document.getElementById('sysTools').value,
+    stakeholders: document.getElementById('stakeholders').value,
+  };
+  const riskData = risks.map((r, i) => ({
+    ...r,
+    likelihood: document.querySelector(`select[data-field="likelihood"][data-idx="${i}"]`)?.value || '',
+    impact: document.querySelector(`select[data-field="impact"][data-idx="${i}"]`)?.value || '',
+    effectiveness: document.querySelector(`select[data-field="effectiveness"][data-idx="${i}"]`)?.value || '',
+    existingControls: document.querySelector(`textarea[data-field="controls"][data-idx="${i}"]`)?.value || '',
+    actions: document.querySelector(`textarea[data-field="actions"][data-idx="${i}"]`)?.value || '',
+    owner: document.querySelector(`input[data-field="owner"][data-idx="${i}"]`)?.value || '',
+    status: document.querySelector(`select[data-field="status"][data-idx="${i}"]`)?.value || ''
+  }));
+  return { meta, risks: riskData, exportedAt: new Date().toISOString() };
+}
+
+function saveToLocalStorage() {
+  localStorage.setItem('agenticRiskAssessment', JSON.stringify(collectData()));
+  showToast('Draft saved to browser storage.');
+}
+
+function loadFromLocalStorage() {
+  const saved = localStorage.getItem('agenticRiskAssessment');
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    Object.entries(data.meta || {}).forEach(([k, v]) => {
+      const el = document.getElementById(k);
+      if (el) el.value = v;
+    });
+    (data.risks || []).forEach((r, i) => {
+      ['likelihood','impact','effectiveness','status'].forEach(f => {
+        const el = document.querySelector(`select[data-field="${f}"][data-idx="${i}"]`);
+        if (el && r[f]) el.value = r[f];
+      });
+      const ctrl = document.querySelector(`textarea[data-field="controls"][data-idx="${i}"]`);
+      if (ctrl && r.existingControls) ctrl.value = r.existingControls;
+      const act = document.querySelector(`textarea[data-field="actions"][data-idx="${i}"]`);
+      if (act && r.actions) act.value = r.actions;
+      const own = document.querySelector(`input[data-field="owner"][data-idx="${i}"]`);
+      if (own && r.owner) own.value = r.owner;
+      calcRisk(i);
+    });
+  } catch (e) { console.error('Error loading saved data', e); }
+}
+
+// ── Export ──
+function showExportModal() { document.getElementById('exportModal').classList.add('active'); }
+function hideExportModal() { document.getElementById('exportModal').classList.remove('active'); }
+document.getElementById('exportModal').addEventListener('click', e => { if (e.target === e.currentTarget) hideExportModal(); });
+
+function exportJSON() {
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `agentic-risk-assessment-${data.meta.assessId || 'export'}.json`);
+  hideExportModal();
+}
+
+function exportCSV() {
+  const data = collectData();
+  const headers = ['Risk ID','Risk Name','Description','OWASP Mapping','EU AI Act','ISO 42001','NIST AI RMF','Likelihood','Impact','Inherent Risk Score','Existing Controls','Control Effectiveness','Residual Risk Score','Recommended Actions','Owner','Status'];
+  const rows = data.risks.map(r => {
+    const l = parseInt(r.likelihood) || 0;
+    const imp = parseInt(r.impact) || 0;
+    const inherent = l * imp;
+    const eff = parseFloat(r.effectiveness);
+    const residual = !isNaN(eff) && inherent > 0 ? Math.round(inherent * (1 - eff)) : inherent;
+    return [r.id, r.name, `"${r.desc.replace(/"/g,'""')}"`, r.owasp, r.euai, r.iso, r.nist, r.likelihood, r.impact, inherent || '', `"${(r.existingControls || '').replace(/"/g,'""')}"`, r.effectiveness ? (parseFloat(r.effectiveness)*100)+'%' : '', residual || '', `"${(r.actions || '').replace(/"/g,'""')}"`, r.owner, r.status];
+  });
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  downloadBlob(blob, `agentic-risk-assessment-${data.meta.assessId || 'export'}.csv`);
+  hideExportModal();
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:2rem;right:2rem;background:var(--surface2);border:1px solid var(--border-light);color:var(--text);padding:0.7rem 1.2rem;border-radius:8px;font-size:0.82rem;z-index:300;animation:fadeIn 0.2s ease;';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+
+// ── Init ──
+renderRiskTable();
+loadFromLocalStorage();
+document.getElementById('assessDate').valueAsDate = new Date();
+</script>
+</body>
+</html>
